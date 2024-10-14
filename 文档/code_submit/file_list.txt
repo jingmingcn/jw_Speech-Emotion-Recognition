@@ -1,0 +1,15 @@
+-rw-r--r--  1 jingming  staff   3.6K  7  6 19:12 Child_File_Setting.py
+-rw-r--r--  1 jingming  staff   5.5K  7  6 19:12 FilterCvQtContainer.py
+-rw-r--r--  1 jingming  staff   951B  7  6 19:12 ImageCvQtContainer.py
+-rw-r--r--  1 jingming  staff     0B  7  6 19:12 __init__.py
+-rw-r--r--  1 jingming  staff    18K  7  6 19:12 child_CameraVoice_setting.py
+-rw-r--r--  1 jingming  staff   6.2K  7  6 19:12 child_file.py
+-rw-r--r--  1 jingming  staff   4.8K  7  6 19:12 child_file.ui
+-rw-r--r--  1 jingming  staff   2.8K  7  6 19:12 child_setting.py
+-rw-r--r--  1 jingming  staff   2.1K  7  6 19:12 child_setting.ui
+-rw-r--r--  1 jingming  staff    14K  7  6 19:12 child_test.py
+-rw-r--r--  1 jingming  staff    18K  7  6 19:12 child_test.ui
+-rw-r--r--  1 jingming  staff    12K  7  6 19:12 gui.py
+-rw-r--r--  1 jingming  staff   9.4K  7  6 19:12 gui.ui
+-rw-r--r--  1 jingming  staff   480B  7  6 19:12 main.py
+-rw-r--r--@ 1 jingming  staff   1.2K  7  6 19:12 test.py

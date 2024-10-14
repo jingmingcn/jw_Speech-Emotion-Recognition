@@ -1,0 +1,120 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+c1}{\PYGZsh{} DS\PYGZus{}Major\PYGZhy{}Project\PYGZus{}Group\PYGZhy{}1}
+
+\PYG{c+c1}{\PYGZsh{} To run this script using terminal, use ::  streamlit run 4\PYGZbs{} \PYGZhy{}\PYGZbs{} Dashboard.py \PYGZhy{}\PYGZhy{}server.fileWatcherType none}
+
+\PYG{c+c1}{\PYGZsh{} Dashboard Source Code}
+
+\PYG{k+kn}{import} \PYG{n+nn}{streamlit} \PYG{k}{as} \PYG{n+nn}{st}
+\PYG{k+kn}{import} \PYG{n+nn}{pyaudio}
+\PYG{k+kn}{import} \PYG{n+nn}{wave}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+\PYG{k+kn}{import} \PYG{n+nn}{librosa}
+\PYG{k+kn}{import} \PYG{n+nn}{librosa.util}\PYG{o}{,} \PYG{n+nn}{librosa.display}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{import} \PYG{n+nn}{mir\PYGZus{}eval}
+\PYG{k+kn}{import} \PYG{n+nn}{scipy}
+\PYG{k+kn}{import} \PYG{n+nn}{seaborn} \PYG{k}{as} \PYG{n+nn}{sns}
+\PYG{k+kn}{from} \PYG{n+nn}{IPython.display} \PYG{k+kn}{import} \PYG{n}{Audio}
+\PYG{k+kn}{import} \PYG{n+nn}{cmath}
+\PYG{k+kn}{import} \PYG{n+nn}{pickle}
+\PYG{k+kn}{import} \PYG{n+nn}{tensorflow}
+
+\PYG{c+c1}{\PYGZsh{} Function for recording audio}
+\PYG{k}{def} \PYG{n+nf}{record}\PYG{p}{():}
+	\PYG{n}{p} \PYG{o}{=} \PYG{n}{pyaudio}\PYG{o}{.}\PYG{n}{PyAudio}\PYG{p}{()}
+	\PYG{n}{stream} \PYG{o}{=} \PYG{n}{p}\PYG{o}{.}\PYG{n}{open}\PYG{p}{(}\PYG{n+nb}{format}\PYG{o}{=}\PYG{n}{pyaudio}\PYG{o}{.}\PYG{n}{paInt16}\PYG{p}{,}\PYG{n}{channels}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n}{rate}\PYG{o}{=}\PYG{l+m+mi}{44100}\PYG{p}{,}
+	                \PYG{n+nb}{input}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{,}\PYG{n}{frames\PYGZus{}per\PYGZus{}buffer}\PYG{o}{=}\PYG{l+m+mi}{1024}\PYG{p}{)}
+	\PYG{n}{frames} \PYG{o}{=} \PYG{p}{[]}
+	\PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{int}\PYG{p}{(}\PYG{l+m+mi}{44100} \PYG{o}{/} \PYG{l+m+mi}{1024} \PYG{o}{*} \PYG{l+m+mi}{30}\PYG{p}{)):} \PYG{c+c1}{\PYGZsh{} Record for 2 seconds}
+		\PYG{n}{data} \PYG{o}{=} \PYG{n}{stream}\PYG{o}{.}\PYG{n}{read}\PYG{p}{(}\PYG{l+m+mi}{1024}\PYG{p}{)}
+		\PYG{n}{frames}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+
+	\PYG{n}{stream}\PYG{o}{.}\PYG{n}{stop\PYGZus{}stream}\PYG{p}{()}
+	\PYG{n}{stream}\PYG{o}{.}\PYG{n}{close}\PYG{p}{()}
+	\PYG{n}{p}\PYG{o}{.}\PYG{n}{terminate}\PYG{p}{()}
+	\PYG{n}{wf} \PYG{o}{=} \PYG{n}{wave}\PYG{o}{.}\PYG{n}{open}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}rec.wav\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}wb\PYGZsq{}}\PYG{p}{)}
+	\PYG{n}{wf}\PYG{o}{.}\PYG{n}{setnchannels}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}
+	\PYG{n}{wf}\PYG{o}{.}\PYG{n}{setsampwidth}\PYG{p}{(}\PYG{n}{p}\PYG{o}{.}\PYG{n}{get\PYGZus{}sample\PYGZus{}size}\PYG{p}{(}\PYG{n}{pyaudio}\PYG{o}{.}\PYG{n}{paInt16}\PYG{p}{))}
+	\PYG{n}{wf}\PYG{o}{.}\PYG{n}{setframerate}\PYG{p}{(}\PYG{l+m+mi}{44100}\PYG{p}{)}
+	\PYG{n}{wf}\PYG{o}{.}\PYG{n}{writeframes}\PYG{p}{(}\PYG{l+s+sa}{b}\PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{o}{.}\PYG{n}{join}\PYG{p}{(}\PYG{n}{frames}\PYG{p}{))}
+	\PYG{n}{wf}\PYG{o}{.}\PYG{n}{close}\PYG{p}{()}
+
+\PYG{c+c1}{\PYGZsh{} Extracting features for saved wav file}
+\PYG{k}{def} \PYG{n+nf}{extract\PYGZus{}features}\PYG{p}{():}
+	\PYG{n}{y}\PYG{p}{,}\PYG{n}{\PYGZus{}} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{load}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}rec\PYGZus{}.wav\PYGZsq{}}\PYG{p}{);} \PYG{n}{sr} \PYG{o}{=} \PYG{l+m+mi}{22500}
+	\PYG{n}{y}\PYG{p}{,}\PYG{n}{\PYGZus{}} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{effects}\PYG{o}{.}\PYG{n}{trim}\PYG{p}{(}\PYG{n}{y}\PYG{p}{)}
+	\PYG{n}{MFCC} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{feature}\PYG{o}{.}\PYG{n}{mfcc}\PYG{p}{(}\PYG{n}{y}\PYG{o}{=}\PYG{n}{y}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{n}{sr}\PYG{p}{);} \PYG{n}{MFCC} \PYG{o}{=} \PYG{p}{[}\PYG{n}{np}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{MFCC}\PYG{p}{]}
+	\PYG{n}{y\PYGZus{}harmonic}\PYG{p}{,} \PYG{n}{y\PYGZus{}percussive} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{effects}\PYG{o}{.}\PYG{n}{hpss}\PYG{p}{(}\PYG{n}{y}\PYG{p}{)}
+	\PYG{n}{y\PYGZus{}harmonic}\PYG{p}{,} \PYG{n}{y\PYGZus{}percussive} \PYG{o}{=} \PYG{n}{y\PYGZus{}harmonic}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(),} \PYG{n}{y\PYGZus{}percussive}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{()}
+	\PYG{n}{C} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{cqt}\PYG{p}{(}\PYG{n}{y}\PYG{p}{);} \PYG{n}{C\PYGZus{}mean} \PYG{o}{=} \PYG{p}{[}\PYG{n}{np}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{C}\PYG{p}{];} \PYG{n}{C\PYGZus{}mean} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{complex}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)}\PYG{o}{.}\PYG{n}{real} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{C\PYGZus{}mean}\PYG{p}{]}
+	\PYG{n}{chroma} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{feature}\PYG{o}{.}\PYG{n}{chroma\PYGZus{}cqt}\PYG{p}{(}\PYG{n}{C}\PYG{o}{=}\PYG{n}{C}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{n}{sr}\PYG{p}{);} \PYG{n}{chroma\PYGZus{}mean} \PYG{o}{=} \PYG{p}{[}\PYG{n}{np}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{chroma}\PYG{p}{]}
+	\PYG{n}{a}\PYG{p}{,} \PYG{n}{b} \PYG{o}{=} \PYG{p}{[],[]}
+	\PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{chroma\PYGZus{}mean}\PYG{p}{)):}
+		\PYG{n}{polar} \PYG{o}{=} \PYG{n}{cmath}\PYG{o}{.}\PYG{n}{polar}\PYG{p}{(}\PYG{n+nb}{complex}\PYG{p}{(}\PYG{n}{chroma\PYGZus{}mean}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]));} \PYG{n}{a}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{polar}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]);} \PYG{n}{b}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{polar}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+	\PYG{n}{onset\PYGZus{}envelope} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{onset}\PYG{o}{.}\PYG{n}{onset\PYGZus{}strength}\PYG{p}{(}\PYG{n}{y}\PYG{o}{=}\PYG{n}{y}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{n}{sr}\PYG{p}{);} \PYG{n}{onsets} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{onset}\PYG{o}{.}\PYG{n}{onset\PYGZus{}detect}\PYG{p}{(}\PYG{n}{onset\PYGZus{}envelope}\PYG{o}{=}\PYG{n}{onset\PYGZus{}envelope}\PYG{p}{)}
+	\PYG{n}{onsets} \PYG{o}{=} \PYG{n}{onsets}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{];} \PYG{n}{tempo}\PYG{p}{,} \PYG{n}{beats} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{beat}\PYG{o}{.}\PYG{n}{beat\PYGZus{}track}\PYG{p}{(}\PYG{n}{onset\PYGZus{}envelope}\PYG{o}{=}\PYG{n}{onset\PYGZus{}envelope}\PYG{p}{)}
+	\PYG{n}{c\PYGZus{}sync} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{util}\PYG{o}{.}\PYG{n}{sync}\PYG{p}{(}\PYG{n}{chroma}\PYG{p}{,} \PYG{n}{beats}\PYG{p}{,} \PYG{n}{aggregate}\PYG{o}{=}\PYG{n}{np}\PYG{o}{.}\PYG{n}{median}\PYG{p}{);} \PYG{n}{c\PYGZus{}sync} \PYG{o}{=} \PYG{p}{[}\PYG{n}{np}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{c\PYGZus{}sync}\PYG{p}{]}
+	\PYG{n}{c}\PYG{p}{,} \PYG{n}{d} \PYG{o}{=} \PYG{p}{[],[]}
+	\PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{c\PYGZus{}sync}\PYG{p}{)):}
+		\PYG{n}{polar} \PYG{o}{=} \PYG{n}{cmath}\PYG{o}{.}\PYG{n}{polar}\PYG{p}{(}\PYG{n+nb}{complex}\PYG{p}{(}\PYG{n}{c\PYGZus{}sync}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]));} \PYG{n}{c}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{polar}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]);} \PYG{n}{d}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{polar}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+	\PYG{n}{spectral\PYGZus{}bandwidth} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{feature}\PYG{o}{.}\PYG{n}{spectral\PYGZus{}bandwidth}\PYG{p}{(}\PYG{n}{y}\PYG{o}{=}\PYG{n}{y}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{n}{sr}\PYG{p}{);} \PYG{n}{spectral\PYGZus{}bandwidth} \PYG{o}{=} \PYG{n}{spectral\PYGZus{}bandwidth}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{()}
+	\PYG{n}{spectral\PYGZus{}rolloff} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{feature}\PYG{o}{.}\PYG{n}{spectral\PYGZus{}rolloff}\PYG{p}{(}\PYG{n}{y}\PYG{o}{=}\PYG{n}{y}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{n}{sr}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{];} \PYG{n}{spectral\PYGZus{}rolloff} \PYG{o}{=} \PYG{n}{spectral\PYGZus{}rolloff}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{()}
+	\PYG{n}{spectral\PYGZus{}centroids} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{feature}\PYG{o}{.}\PYG{n}{spectral\PYGZus{}centroid}\PYG{p}{(}\PYG{n}{y}\PYG{o}{=}\PYG{n}{y}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{n}{sr}\PYG{p}{);} \PYG{n}{spectral\PYGZus{}centroids} \PYG{o}{=} \PYG{n}{spectral\PYGZus{}centroids}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{()}
+	\PYG{n}{arr} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{hstack}\PYG{p}{(([],} \PYG{n}{MFCC}\PYG{p}{,} \PYG{n}{y\PYGZus{}harmonic}\PYG{p}{,} \PYG{n}{y\PYGZus{}percussive}\PYG{p}{,} \PYG{n}{C\PYGZus{}mean}\PYG{p}{,} \PYG{n}{a}\PYG{p}{,} \PYG{n}{b}\PYG{p}{,} \PYG{n}{onsets}\PYG{p}{,} \PYG{n}{tempo}\PYG{p}{,} \PYG{n}{beats}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{c}\PYG{p}{,}\PYG{n}{d}\PYG{p}{,} \PYG{n}{spectral\PYGZus{}bandwidth}\PYG{p}{,} \PYG{n}{spectral\PYGZus{}rolloff}\PYG{p}{,} \PYG{n}{spectral\PYGZus{}centroids}\PYG{p}{,}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{))}
+	\PYG{k}{return} \PYG{n}{y}\PYG{p}{,} \PYG{n}{arr}
+
+\PYG{c+c1}{\PYGZsh{} Predicting emotion from the features using trained model}
+\PYG{k}{def} \PYG{n+nf}{predict\PYGZus{}emotion}\PYG{p}{(}\PYG{n}{arr}\PYG{p}{):}
+	\PYG{c+c1}{\PYGZsh{} emotions = [\PYGZsq{}Angry\PYGZsq{}, \PYGZsq{}Disgust\PYGZsq{}, \PYGZsq{}Fear\PYGZsq{}, \PYGZsq{}Happy/Joy\PYGZsq{}, \PYGZsq{}Neutral\PYGZsq{}, \PYGZsq{}Sad\PYGZsq{}]}
+	\PYG{n}{emotions} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}生气\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}厌恶\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}恐惧\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}高兴\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}中性\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}伤心\PYGZsq{}}\PYG{p}{]}
+	\PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}speech\PYGZus{}emotion\PYGZus{}classifier.pkl\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}rb\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+		\PYG{c+c1}{\PYGZsh{} model = pickle.load(f)}
+	    \PYG{c+c1}{\PYGZsh{} pred = model.predict(arr.reshape((1,165)))}
+	    \PYG{c+c1}{\PYGZsh{} return (emotions[int(np.where( pred == pred.max() )[1])])}
+		\PYG{k}{return} \PYG{n}{emotions}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]}
+
+\PYG{c+c1}{\PYGZsh{} Dashboard Styling}
+\PYG{n}{st}\PYG{o}{.}\PYG{n}{set\PYGZus{}page\PYGZus{}config}\PYG{p}{(}\PYG{n}{page\PYGZus{}title}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}语音情绪识别\PYGZsq{}}\PYG{p}{,} \PYG{n}{page\PYGZus{}icon}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}🗣️\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{st}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}语音情绪识别\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{st}\PYG{o}{.}\PYG{n}{caption}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{)}
+
+\PYG{n}{sample\PYGZus{}id} \PYG{o}{=} \PYG{n}{st}\PYG{o}{.}\PYG{n}{text\PYGZus{}input}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}样本编号：\PYGZsq{}}\PYG{p}{)}
+
+\PYG{n}{pressed} \PYG{o}{=} \PYG{n}{st}\PYG{o}{.}\PYG{n}{button}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}1.录制语音\PYGZsq{}}\PYG{p}{)}
+
+\PYG{k}{if} \PYG{n}{pressed}\PYG{p}{:}
+	\PYG{k}{with} \PYG{n}{st}\PYG{o}{.}\PYG{n}{spinner}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}正在录音中...\PYGZsq{}}\PYG{p}{):}
+		\PYG{n}{record}\PYG{p}{()}
+	\PYG{n}{st}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}录制完成\PYGZsq{}}\PYG{p}{)}
+	\PYG{n}{st}\PYG{o}{.}\PYG{n}{audio}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}rec.wav\PYGZsq{}}\PYG{p}{)}
+
+\PYG{n}{btn\PYGZus{}analysis} \PYG{o}{=} \PYG{n}{st}\PYG{o}{.}\PYG{n}{button}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}2.语音分析\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{arr} \PYG{o}{=} \PYG{p}{[]}
+\PYG{k}{if} \PYG{n}{btn\PYGZus{}analysis}\PYG{p}{:}
+	\PYG{c+c1}{\PYGZsh{} Plotting graphs on the dashboard}
+	\PYG{n}{y}\PYG{p}{,} \PYG{n}{arr} \PYG{o}{=} \PYG{n}{extract\PYGZus{}features}\PYG{p}{()}
+	\PYG{n}{fig}\PYG{p}{,}\PYG{n}{ax} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplots}\PYG{p}{(}\PYG{n}{figsize}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{15}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{))}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{,}\PYG{l+m+mi}{1}\PYG{p}{)}
+	\PYG{n}{librosa}\PYG{o}{.}\PYG{n}{display}\PYG{o}{.}\PYG{n}{waveshow}\PYG{p}{(}\PYG{n}{y}\PYG{o}{=}\PYG{n}{y}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{l+m+mi}{22500}\PYG{p}{);}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Time Serials\PYGZsq{}}\PYG{p}{)}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{)}
+	\PYG{n}{y\PYGZus{}stft} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{abs}\PYG{p}{(}\PYG{n}{librosa}\PYG{o}{.}\PYG{n}{stft}\PYG{p}{(}\PYG{n}{y}\PYG{p}{))}
+	\PYG{n}{y\PYGZus{}stft} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{amplitude\PYGZus{}to\PYGZus{}db}\PYG{p}{(}\PYG{n}{y\PYGZus{}stft}\PYG{p}{,} \PYG{n}{ref}\PYG{o}{=}\PYG{n}{np}\PYG{o}{.}\PYG{n}{max}\PYG{p}{)}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{colorbar}\PYG{p}{(}\PYG{n}{librosa}\PYG{o}{.}\PYG{n}{display}\PYG{o}{.}\PYG{n}{specshow}\PYG{p}{(}\PYG{n}{y\PYGZus{}stft}\PYG{p}{,} \PYG{n}{x\PYGZus{}axis}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}time\PYGZsq{}}\PYG{p}{,} \PYG{n}{y\PYGZus{}axis}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}log\PYGZsq{}}\PYG{p}{))}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Frequency Spectogram\PYGZsq{}}\PYG{p}{)}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{)}
+	\PYG{n}{y\PYGZus{}mel} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{feature}\PYG{o}{.}\PYG{n}{melspectrogram}\PYG{p}{(}\PYG{n}{y}\PYG{o}{=}\PYG{n}{y}\PYG{p}{,} \PYG{n}{sr}\PYG{o}{=}\PYG{l+m+mi}{22500}\PYG{p}{)}
+	\PYG{n}{y\PYGZus{}mel\PYGZus{}db} \PYG{o}{=} \PYG{n}{librosa}\PYG{o}{.}\PYG{n}{amplitude\PYGZus{}to\PYGZus{}db}\PYG{p}{(}\PYG{n}{y\PYGZus{}mel}\PYG{p}{,} \PYG{n}{ref}\PYG{o}{=}\PYG{n}{np}\PYG{o}{.}\PYG{n}{max}\PYG{p}{)}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{colorbar}\PYG{p}{(}\PYG{n}{librosa}\PYG{o}{.}\PYG{n}{display}\PYG{o}{.}\PYG{n}{specshow}\PYG{p}{(}\PYG{n}{y\PYGZus{}mel\PYGZus{}db}\PYG{p}{,} \PYG{n}{x\PYGZus{}axis}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}time\PYGZsq{}}\PYG{p}{,} \PYG{n}{y\PYGZus{}axis}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}log\PYGZsq{}}\PYG{p}{))}
+	\PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Mel Spectogram\PYGZsq{}}\PYG{p}{)}
+
+	\PYG{n}{st}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}提取语音特征\PYGZsq{}}\PYG{p}{)}
+	\PYG{n}{st}\PYG{o}{.}\PYG{n}{pyplot}\PYG{p}{(}\PYG{n}{fig}\PYG{p}{)}
+
+\PYG{n}{btn\PYGZus{}predict} \PYG{o}{=} \PYG{n}{st}\PYG{o}{.}\PYG{n}{button}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}3.情绪预测\PYGZsq{}}\PYG{p}{)}
+
+\PYG{k}{if} \PYG{n}{btn\PYGZus{}predict}\PYG{p}{:}
+	\PYG{n}{st}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}情绪预测结果 : \PYGZsq{}}\PYG{p}{)}
+	\PYG{n}{st}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{n}{predict\PYGZus{}emotion}\PYG{p}{(}\PYG{n}{arr}\PYG{p}{))}
+\end{Verbatim}

@@ -1,0 +1,187 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kn}{import} \PYG{n+nn}{tensorflow} \PYG{k}{as} \PYG{n+nn}{tf}
+\PYG{k+kn}{from} \PYG{n+nn}{tensorflow.keras} \PYG{k+kn}{import} \PYG{n}{layers}\PYG{p}{,} \PYG{n}{Model}
+\PYG{k+kn}{from} \PYG{n+nn}{tensorflow.keras.datasets} \PYG{k+kn}{import} \PYG{n}{imdb}
+\PYG{k+kn}{from} \PYG{n+nn}{tensorflow.keras.preprocessing} \PYG{k+kn}{import} \PYG{n}{sequence}
+
+\PYG{c+c1}{\PYGZsh{} 加载 IMDB 数据集}
+\PYG{n}{max\PYGZus{}features} \PYG{o}{=} \PYG{l+m+mi}{20000}  \PYG{c+c1}{\PYGZsh{} 词汇表大小}
+\PYG{n}{max\PYGZus{}len} \PYG{o}{=} \PYG{l+m+mi}{200}  \PYG{c+c1}{\PYGZsh{} 序列最大长度}
+
+\PYG{p}{(}\PYG{n}{x\PYGZus{}train}\PYG{p}{,} \PYG{n}{y\PYGZus{}train}\PYG{p}{),} \PYG{p}{(}\PYG{n}{x\PYGZus{}test}\PYG{p}{,} \PYG{n}{y\PYGZus{}test}\PYG{p}{)} \PYG{o}{=} \PYG{n}{imdb}\PYG{o}{.}\PYG{n}{load\PYGZus{}data}\PYG{p}{(}\PYG{n}{num\PYGZus{}words}\PYG{o}{=}\PYG{n}{max\PYGZus{}features}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} 将序列填充到固定长度}
+\PYG{n}{x\PYGZus{}train} \PYG{o}{=} \PYG{n}{sequence}\PYG{o}{.}\PYG{n}{pad\PYGZus{}sequences}\PYG{p}{(}\PYG{n}{x\PYGZus{}train}\PYG{p}{,} \PYG{n}{maxlen}\PYG{o}{=}\PYG{n}{max\PYGZus{}len}\PYG{p}{)}
+\PYG{n}{x\PYGZus{}test} \PYG{o}{=} \PYG{n}{sequence}\PYG{o}{.}\PYG{n}{pad\PYGZus{}sequences}\PYG{p}{(}\PYG{n}{x\PYGZus{}test}\PYG{p}{,} \PYG{n}{maxlen}\PYG{o}{=}\PYG{n}{max\PYGZus{}len}\PYG{p}{)}
+
+\PYG{k}{class} \PYG{n+nc}{PositionalEncoding}\PYG{p}{(}\PYG{n}{layers}\PYG{o}{.}\PYG{n}{Layer}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{max\PYGZus{}len}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{):}
+        \PYG{n+nb}{super}\PYG{p}{(}\PYG{n}{PositionalEncoding}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{()}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{pos\PYGZus{}encoding} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{positional\PYGZus{}encoding}\PYG{p}{(}\PYG{n}{max\PYGZus{}len}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{positional\PYGZus{}encoding}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{max\PYGZus{}len}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{):}
+        \PYG{n}{angle\PYGZus{}rads} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}angles}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n}{max\PYGZus{}len}\PYG{p}{)[:,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{newaxis}\PYG{p}{],}
+                                     \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{)[}\PYG{n}{np}\PYG{o}{.}\PYG{n}{newaxis}\PYG{p}{,} \PYG{p}{:],}
+                                     \PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+        \PYG{n}{angle\PYGZus{}rads}\PYG{p}{[:,} \PYG{l+m+mi}{0}\PYG{p}{::}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sin}\PYG{p}{(}\PYG{n}{angle\PYGZus{}rads}\PYG{p}{[:,} \PYG{l+m+mi}{0}\PYG{p}{::}\PYG{l+m+mi}{2}\PYG{p}{])}
+        \PYG{n}{angle\PYGZus{}rads}\PYG{p}{[:,} \PYG{l+m+mi}{1}\PYG{p}{::}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{cos}\PYG{p}{(}\PYG{n}{angle\PYGZus{}rads}\PYG{p}{[:,} \PYG{l+m+mi}{1}\PYG{p}{::}\PYG{l+m+mi}{2}\PYG{p}{])}
+        \PYG{n}{pos\PYGZus{}encoding} \PYG{o}{=} \PYG{n}{angle\PYGZus{}rads}\PYG{p}{[}\PYG{n}{np}\PYG{o}{.}\PYG{n}{newaxis}\PYG{p}{,} \PYG{o}{...}\PYG{p}{]}
+        \PYG{k}{return} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{cast}\PYG{p}{(}\PYG{n}{pos\PYGZus{}encoding}\PYG{p}{,} \PYG{n}{dtype}\PYG{o}{=}\PYG{n}{tf}\PYG{o}{.}\PYG{n}{float32}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}angles}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{pos}\PYG{p}{,} \PYG{n}{i}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{):}
+        \PYG{n}{angle\PYGZus{}rates} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{/} \PYG{n}{np}\PYG{o}{.}\PYG{n}{power}\PYG{p}{(}\PYG{l+m+mi}{10000}\PYG{p}{,} \PYG{p}{(}\PYG{l+m+mi}{2} \PYG{o}{*} \PYG{p}{(}\PYG{n}{i} \PYG{o}{//} \PYG{l+m+mi}{2}\PYG{p}{))} \PYG{o}{/} \PYG{n}{np}\PYG{o}{.}\PYG{n}{float32}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{pos} \PYG{o}{*} \PYG{n}{angle\PYGZus{}rates}
+
+    \PYG{k}{def} \PYG{n+nf}{call}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{inputs}\PYG{p}{):}
+        \PYG{k}{return} \PYG{n}{inputs} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{pos\PYGZus{}encoding}\PYG{p}{[:,} \PYG{p}{:}\PYG{n}{tf}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{(}\PYG{n}{inputs}\PYG{p}{)[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{:]}
+    
+\PYG{k}{class} \PYG{n+nc}{MultiHeadAttention}\PYG{p}{(}\PYG{n}{layers}\PYG{o}{.}\PYG{n}{Layer}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{num\PYGZus{}heads}\PYG{p}{):}
+        \PYG{n+nb}{super}\PYG{p}{(}\PYG{n}{MultiHeadAttention}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{()}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}heads} \PYG{o}{=} \PYG{n}{num\PYGZus{}heads}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{d\PYGZus{}model} \PYG{o}{=} \PYG{n}{d\PYGZus{}model}
+
+        \PYG{k}{assert} \PYG{n}{d\PYGZus{}model} \PYG{o}{\PYGZpc{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}heads} \PYG{o}{==} \PYG{l+m+mi}{0}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{depth} \PYG{o}{=} \PYG{n}{d\PYGZus{}model} \PYG{o}{//} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}heads}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wq} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wk} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wv} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dense} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{split\PYGZus{}heads}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{p}{):}
+        \PYG{n}{x} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{p}{(}\PYG{n}{batch\PYGZus{}size}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}heads}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{depth}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{perm}\PYG{o}{=}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{])}
+
+    \PYG{k}{def} \PYG{n+nf}{call}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{v}\PYG{p}{,} \PYG{n}{k}\PYG{p}{,} \PYG{n}{q}\PYG{p}{,} \PYG{n}{mask}\PYG{p}{):}
+        \PYG{n}{batch\PYGZus{}size} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{(}\PYG{n}{q}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{]}
+
+        \PYG{n}{q} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wq}\PYG{p}{(}\PYG{n}{q}\PYG{p}{)}
+        \PYG{n}{k} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wk}\PYG{p}{(}\PYG{n}{k}\PYG{p}{)}
+        \PYG{n}{v} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wv}\PYG{p}{(}\PYG{n}{v}\PYG{p}{)}
+
+        \PYG{n}{q} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{split\PYGZus{}heads}\PYG{p}{(}\PYG{n}{q}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{p}{)}
+        \PYG{n}{k} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{split\PYGZus{}heads}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{p}{)}
+        \PYG{n}{v} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{split\PYGZus{}heads}\PYG{p}{(}\PYG{n}{v}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{p}{)}
+
+        \PYG{n}{scaled\PYGZus{}attention}\PYG{p}{,} \PYG{n}{\PYGZus{}} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{scaled\PYGZus{}dot\PYGZus{}product\PYGZus{}attention}\PYG{p}{(}\PYG{n}{q}\PYG{p}{,} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v}\PYG{p}{,} \PYG{n}{mask}\PYG{p}{)}
+        \PYG{n}{scaled\PYGZus{}attention} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{scaled\PYGZus{}attention}\PYG{p}{,} \PYG{n}{perm}\PYG{o}{=}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{])}
+        \PYG{n}{concat\PYGZus{}attention} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{(}\PYG{n}{scaled\PYGZus{}attention}\PYG{p}{,} \PYG{p}{(}\PYG{n}{batch\PYGZus{}size}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{d\PYGZus{}model}\PYG{p}{))}
+        \PYG{n}{output} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dense}\PYG{p}{(}\PYG{n}{concat\PYGZus{}attention}\PYG{p}{)}
+
+        \PYG{k}{return} \PYG{n}{output}
+
+    \PYG{k}{def} \PYG{n+nf}{scaled\PYGZus{}dot\PYGZus{}product\PYGZus{}attention}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{q}\PYG{p}{,} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v}\PYG{p}{,} \PYG{n}{mask}\PYG{p}{):}
+        \PYG{n}{matmul\PYGZus{}qk} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{matmul}\PYG{p}{(}\PYG{n}{q}\PYG{p}{,} \PYG{n}{k}\PYG{p}{,} \PYG{n}{transpose\PYGZus{}b}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+        \PYG{n}{dk} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{cast}\PYG{p}{(}\PYG{n}{tf}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{(}\PYG{n}{k}\PYG{p}{)[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{float32}\PYG{p}{)}
+        \PYG{n}{scaled\PYGZus{}attention\PYGZus{}logits} \PYG{o}{=} \PYG{n}{matmul\PYGZus{}qk} \PYG{o}{/} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{math}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{dk}\PYG{p}{)}
+
+        \PYG{k}{if} \PYG{n}{mask} \PYG{o+ow}{is} \PYG{o+ow}{not} \PYG{k+kc}{None}\PYG{p}{:}
+            \PYG{n}{scaled\PYGZus{}attention\PYGZus{}logits} \PYG{o}{+=} \PYG{p}{(}\PYG{n}{mask} \PYG{o}{*} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{1e9}\PYG{p}{)}
+
+        \PYG{n}{attention\PYGZus{}weights} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{nn}\PYG{o}{.}\PYG{n}{softmax}\PYG{p}{(}\PYG{n}{scaled\PYGZus{}attention\PYGZus{}logits}\PYG{p}{,} \PYG{n}{axis}\PYG{o}{=\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{output} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{matmul}\PYG{p}{(}\PYG{n}{attention\PYGZus{}weights}\PYG{p}{,} \PYG{n}{v}\PYG{p}{)}
+
+        \PYG{k}{return} \PYG{n}{output}\PYG{p}{,} \PYG{n}{attention\PYGZus{}weights}
+    
+\PYG{k}{class} \PYG{n+nc}{EncoderLayer}\PYG{p}{(}\PYG{n}{layers}\PYG{o}{.}\PYG{n}{Layer}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{num\PYGZus{}heads}\PYG{p}{,} \PYG{n}{dff}\PYG{p}{,} \PYG{n}{rate}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{):}
+        \PYG{n+nb}{super}\PYG{p}{(}\PYG{n}{EncoderLayer}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{()}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mha} \PYG{o}{=} \PYG{n}{MultiHeadAttention}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{num\PYGZus{}heads}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ffn} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{point\PYGZus{}wise\PYGZus{}feed\PYGZus{}forward\PYGZus{}network}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{dff}\PYG{p}{)}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{layernorm1} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{LayerNormalization}\PYG{p}{(}\PYG{n}{epsilon}\PYG{o}{=}\PYG{l+m+mf}{1e\PYGZhy{}6}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{layernorm2} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{LayerNormalization}\PYG{p}{(}\PYG{n}{epsilon}\PYG{o}{=}\PYG{l+m+mf}{1e\PYGZhy{}6}\PYG{p}{)}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dropout1} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dropout}\PYG{p}{(}\PYG{n}{rate}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dropout2} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dropout}\PYG{p}{(}\PYG{n}{rate}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{call}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{training}\PYG{p}{,} \PYG{n}{mask}\PYG{p}{):}
+        \PYG{n}{attn\PYGZus{}output} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mha}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{mask}\PYG{p}{)}
+        \PYG{n}{attn\PYGZus{}output} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dropout1}\PYG{p}{(}\PYG{n}{attn\PYGZus{}output}\PYG{p}{,} \PYG{n}{training}\PYG{o}{=}\PYG{n}{training}\PYG{p}{)}
+        \PYG{n}{out1} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{layernorm1}\PYG{p}{(}\PYG{n}{x} \PYG{o}{+} \PYG{n}{attn\PYGZus{}output}\PYG{p}{)}
+
+        \PYG{n}{ffn\PYGZus{}output} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ffn}\PYG{p}{(}\PYG{n}{out1}\PYG{p}{)}
+        \PYG{n}{ffn\PYGZus{}output} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dropout2}\PYG{p}{(}\PYG{n}{ffn\PYGZus{}output}\PYG{p}{,} \PYG{n}{training}\PYG{o}{=}\PYG{n}{training}\PYG{p}{)}
+        \PYG{n}{out2} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{layernorm2}\PYG{p}{(}\PYG{n}{out1} \PYG{o}{+} \PYG{n}{ffn\PYGZus{}output}\PYG{p}{)}
+
+        \PYG{k}{return} \PYG{n}{out2}
+
+    \PYG{k}{def} \PYG{n+nf}{point\PYGZus{}wise\PYGZus{}feed\PYGZus{}forward\PYGZus{}network}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{d}\PYG{err}{​⬤}
+                                        
+
+
+\PYG{k}{class} \PYG{n+nc}{Encoder}\PYG{p}{(}\PYG{n}{layers}\PYG{o}{.}\PYG{n}{Layer}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{num\PYGZus{}layers}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{num\PYGZus{}heads}\PYG{p}{,} \PYG{n}{dff}\PYG{p}{,} \PYG{n}{input\PYGZus{}vocab\PYGZus{}size}\PYG{p}{,} \PYG{n}{maximum\PYGZus{}position\PYGZus{}encoding}\PYG{p}{,} \PYG{n}{rate}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{):}
+        \PYG{n+nb}{super}\PYG{p}{(}\PYG{n}{Encoder}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{()}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{d\PYGZus{}model} \PYG{o}{=} \PYG{n}{d\PYGZus{}model}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}layers} \PYG{o}{=} \PYG{n}{num\PYGZus{}layers}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{embedding} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Embedding}\PYG{p}{(}\PYG{n}{input\PYGZus{}vocab\PYGZus{}size}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{pos\PYGZus{}encoding} \PYG{o}{=} \PYG{n}{PositionalEncoding}\PYG{p}{(}\PYG{n}{maximum\PYGZus{}position\PYGZus{}encoding}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{d\PYGZus{}model}\PYG{p}{)}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{enc\PYGZus{}layers} \PYG{o}{=} \PYG{p}{[}\PYG{n}{EncoderLayer}\PYG{p}{(}\PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{num\PYGZus{}heads}\PYG{p}{,} \PYG{n}{dff}\PYG{p}{,} \PYG{n}{rate}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}layers}\PYG{p}{)]}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dropout} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dropout}\PYG{p}{(}\PYG{n}{rate}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{call}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{training}\PYG{p}{,} \PYG{n}{mask}\PYG{p}{):}
+        \PYG{n}{seq\PYGZus{}len} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)[}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+        \PYG{n}{x} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{embedding}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)}
+        \PYG{n}{x} \PYG{o}{*=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{math}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{tf}\PYG{o}{.}\PYG{n}{cast}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{float32}\PYG{p}{))}
+        \PYG{n}{x} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{pos\PYGZus{}encoding}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)}
+
+        \PYG{n}{x} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{dropout}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{training}\PYG{o}{=}\PYG{n}{training}\PYG{p}{)}
+
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}layers}\PYG{p}{):}
+            \PYG{n}{x} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{enc\PYGZus{}layers}\PYG{p}{[}\PYG{n}{i}\PYG{p}{](}\PYG{n}{x}\PYG{p}{,} \PYG{n}{training}\PYG{p}{,} \PYG{n}{mask}\PYG{p}{)}
+
+        \PYG{k}{return} \PYG{n}{x}
+
+\PYG{n}{num\PYGZus{}layers} \PYG{o}{=} \PYG{l+m+mi}{4}
+\PYG{n}{d\PYGZus{}model} \PYG{o}{=} \PYG{l+m+mi}{128}
+\PYG{n}{dff} \PYG{o}{=} \PYG{l+m+mi}{512}
+\PYG{n}{num\PYGZus{}heads} \PYG{o}{=} \PYG{l+m+mi}{8}
+\PYG{n}{input\PYGZus{}vocab\PYGZus{}size} \PYG{o}{=} \PYG{n}{max\PYGZus{}features}
+\PYG{n}{maximum\PYGZus{}position\PYGZus{}encoding} \PYG{o}{=} \PYG{n}{max\PYGZus{}len}
+\PYG{n}{dropout\PYGZus{}rate} \PYG{o}{=} \PYG{l+m+mf}{0.1}
+
+\PYG{n}{inputs} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Input}\PYG{p}{(}\PYG{n}{shape}\PYG{o}{=}\PYG{p}{(}\PYG{n}{max\PYGZus{}len}\PYG{p}{,))}
+\PYG{n}{enc\PYGZus{}padding\PYGZus{}mask} \PYG{o}{=} \PYG{k+kc}{None}  \PYG{c+c1}{\PYGZsh{} 可以根据需要创建 mask}
+
+\PYG{n}{encoder} \PYG{o}{=} \PYG{n}{Encoder}\PYG{p}{(}\PYG{n}{num\PYGZus{}layers}\PYG{p}{,} \PYG{n}{d\PYGZus{}model}\PYG{p}{,} \PYG{n}{num\PYGZus{}heads}\PYG{p}{,} \PYG{n}{dff}\PYG{p}{,} \PYG{n}{input\PYGZus{}vocab\PYGZus{}size}\PYG{p}{,} \PYG{n}{maximum\PYGZus{}position\PYGZus{}encoding}\PYG{p}{,} \PYG{n}{dropout\PYGZus{}rate}\PYG{p}{)}
+\PYG{n}{x} \PYG{o}{=} \PYG{n}{encoder}\PYG{p}{(}\PYG{n}{inputs}\PYG{p}{,} \PYG{n}{training}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{,} \PYG{n}{mask}\PYG{o}{=}\PYG{n}{enc\PYGZus{}padding\PYGZus{}mask}\PYG{p}{)}
+\PYG{n}{x} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{GlobalAveragePooling1D}\PYG{p}{()(}\PYG{n}{x}\PYG{p}{)}
+\PYG{n}{x} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dropout}\PYG{p}{(}\PYG{l+m+mf}{0.1}\PYG{p}{)(}\PYG{n}{x}\PYG{p}{)}
+\PYG{n}{outputs} \PYG{o}{=} \PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}sigmoid\PYGZsq{}}\PYG{p}{)(}\PYG{n}{x}\PYG{p}{)}
+
+\PYG{n}{model} \PYG{o}{=} \PYG{n}{Model}\PYG{p}{(}\PYG{n}{inputs}\PYG{o}{=}\PYG{n}{inputs}\PYG{p}{,} \PYG{n}{outputs}\PYG{o}{=}\PYG{n}{outputs}\PYG{p}{)}
+
+\PYG{n}{model}\PYG{o}{.}\PYG{n}{compile}\PYG{p}{(}\PYG{n}{optimizer}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}adam\PYGZsq{}}\PYG{p}{,} \PYG{n}{loss}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}binary\PYGZus{}crossentropy\PYGZsq{}}\PYG{p}{,} \PYG{n}{metrics}\PYG{o}{=}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}accuracy\PYGZsq{}}\PYG{p}{])}
+
+\PYG{c+c1}{\PYGZsh{} 训练模型}
+\PYG{n}{history} \PYG{o}{=} \PYG{n}{model}\PYG{o}{.}\PYG{n}{fit}\PYG{p}{(}\PYG{n}{x\PYGZus{}train}\PYG{p}{,} \PYG{n}{y\PYGZus{}train}\PYG{p}{,} \PYG{n}{epochs}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{o}{=}\PYG{l+m+mi}{64}\PYG{p}{,} \PYG{n}{validation\PYGZus{}split}\PYG{o}{=}\PYG{l+m+mf}{0.2}\PYG{p}{)}
+
+
+\PYG{c+c1}{\PYGZsh{} 在测试集上评估模型}
+\PYG{n}{test\PYGZus{}loss}\PYG{p}{,} \PYG{n}{test\PYGZus{}acc} \PYG{o}{=} \PYG{n}{model}\PYG{o}{.}\PYG{n}{evaluate}\PYG{p}{(}\PYG{n}{x\PYGZus{}test}\PYG{p}{,} \PYG{n}{y\PYGZus{}test}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Test accuracy: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{test\PYGZus{}acc}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} 保存模型到文件}
+\PYG{n}{model}\PYG{o}{.}\PYG{n}{save}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}transformer\PYGZus{}text\PYGZus{}classification\PYGZus{}model.h5\PYGZsq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} 加载模型}
+\PYG{n}{loaded\PYGZus{}model} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{keras}\PYG{o}{.}\PYG{n}{models}\PYG{o}{.}\PYG{n}{load\PYGZus{}model}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}transformer\PYGZus{}text\PYGZus{}classification\PYGZus{}model.h5\PYGZsq{}}\PYG{p}{,} \PYG{n}{custom\PYGZus{}objects}\PYG{o}{=}\PYG{p}{\PYGZob{}}
+    \PYG{l+s+s1}{\PYGZsq{}PositionalEncoding\PYGZsq{}}\PYG{p}{:} \PYG{n}{PositionalEncoding}\PYG{p}{,}
+    \PYG{l+s+s1}{\PYGZsq{}MultiHeadAttention\PYGZsq{}}\PYG{p}{:} \PYG{n}{MultiHeadAttention}\PYG{p}{,}
+    \PYG{l+s+s1}{\PYGZsq{}EncoderLayer\PYGZsq{}}\PYG{p}{:} \PYG{n}{EncoderLayer}\PYG{p}{,}
+    \PYG{l+s+s1}{\PYGZsq{}Encoder\PYGZsq{}}\PYG{p}{:} \PYG{n}{Encoder}
+\PYG{p}{\PYGZcb{})}
+
+\PYG{c+c1}{\PYGZsh{} 在测试集上评估加载的模型}
+\PYG{n}{test\PYGZus{}loss}\PYG{p}{,} \PYG{n}{test\PYGZus{}acc} \PYG{o}{=} \PYG{n}{loaded\PYGZus{}model}\PYG{o}{.}\PYG{n}{evaluate}\PYG{p}{(}\PYG{n}{x\PYGZus{}test}\PYG{p}{,} \PYG{n}{y\PYGZus{}test}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Test accuracy of loaded model: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{test\PYGZus{}acc}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+\end{Verbatim}

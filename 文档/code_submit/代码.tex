@@ -1,0 +1,29 @@
+\documentclass[a4paper]{ctexart}
+\usepackage{minted}
+\usepackage{pgffor}
+
+\newmintedfile[PythonCode]{python}{
+	frame=lines,
+	framesep=2mm,
+	baselinestretch=1.2,
+	linenos=true, 
+	mathescape, 
+%	xleftmargin=1cm,
+	breaklines,
+	breakanywhere,
+}
+
+\begin{document}
+
+\section{源代码}
+
+\subsection{Dashboard.py}	\PythonCode{../../Dashboard.py}
+\subsection{audio\_feature\_extraction.py}	\PythonCode{../../audio_feature_extraction.py}
+%\subsection{crema.csv}	\PythonCode{../../crema.csv}
+\subsection{model\_training.py}	\PythonCode{../../model_training.py}
+\subsection{record\_speech\_and\_predict.py}	\PythonCode{../../record_speech_and_predict.py}
+\subsection{requirements.txt}	\PythonCode{../../requirements.txt}
+\subsection{test\_keras\_model.py}	\PythonCode{../../test_keras_model.py}
+\subsection{test\_transformer.py}	\PythonCode{../../test_transformer.py}	
+
+\end{document}
